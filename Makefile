@@ -25,8 +25,10 @@ MODULE_PATH=$(shell go list -m)
 # The version this working tree is compared with: the latest tag reachable from
 # HEAD. Override it to compare with another, as in make apicheck API_BASE=v0.0.5.
 API_BASE ?= $(shell git describe --tags --abbrev=0 2>/dev/null)
+# The shared skills are vendored from this checkout; see .agents/skills/README.md.
+SKILLS_SOURCE ?= ../skills
 
-.PHONY: all fmt fmt-check vet lint test apicheck ci integration help
+.PHONY: all fmt fmt-check vet lint test apicheck docs-check skills-sync skills-check ci integration help
 
 all: help
 
@@ -74,7 +76,20 @@ apicheck: ## Compare the exported API with the previous tag and print the versio
 	else bump=none; fi; \
 	echo "version bump required over $(API_BASE): $$bump"
 
-ci: fmt-check vet lint test apicheck ## Run the gate CI runs
+# The vendored skills and the checkers' own tests carry sample work-item ids
+# on purpose, so the walk skips them; the module's own code and documents are
+# still read.
+DOCS_SKIP=.plan,.cache,node_modules,vendor,bin,dist,.agents,scripts
+docs-check: ## Verify docs links, citations, paths, make targets and ids
+	@$(HERMETIC_ENV) $(GOCMD) run ./scripts/docscheck -skip $(DOCS_SKIP)
+
+skills-sync: ## Refresh the shared skills from $(SKILLS_SOURCE); add new ones with SKILLS="a b" (local only)
+	@$(SKILLS_SOURCE)/scripts/sync -C . $(SKILLS)
+
+skills-check: ## Fail if a vendored shared skill differs from the copy recorded in .agents/skills/shared.sum
+	@$(HERMETIC_ENV) $(GOCMD) run ./scripts/skillscheck
+
+ci: fmt-check vet lint test apicheck docs-check skills-check ## Run the gate CI runs
 
 ## Test:
 # Cacheable on purpose: nothing here adds -count=1, and a test must not chdir.
