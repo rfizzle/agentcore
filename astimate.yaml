@@ -467,3 +467,6 @@ exemptions:
   - package: meter
     metric: dup_blocks
     reason: carried from the source package unchanged by the move rule; a later split story may resolve it
+  - package: secret
+    metric: dup_blocks
+    reason: carried from the source package unchanged by the move rule; the pattern table repeats one shape per credential family
