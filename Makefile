@@ -62,13 +62,19 @@ lint: ## Run golangci-lint
 # under .cache/ instead. apidiff reports; the bump is read from its sections:
 # an incompatible change needs a major bump (a minor one while the module is at
 # v0), an addition a minor one, and no change none.
+# The main packages under scripts/ are tooling, not API: apidiff still lists
+# them as added packages, so they are dropped, and a section left with no
+# lines is dropped with them.
 apicheck: ## Compare the exported API with the previous tag and print the version bump it needs
 	@test -n "$(API_BASE)" || { echo "apicheck: no tag to compare with"; exit 1; }
 	@rm -rf .cache/api-base .cache/api-base.export
 	@mkdir -p .cache/api-base
 	@git archive "$(API_BASE)" | tar -x -C .cache/api-base
 	@cd .cache/api-base && $(HERMETIC_ENV) $(GOCMD) run $(APIDIFF) -m -w ../api-base.export $(MODULE_PATH)
-	@$(HERMETIC_ENV) $(GOCMD) run $(APIDIFF) -m .cache/api-base.export $(MODULE_PATH) > .cache/api-diff.txt
+	@$(HERMETIC_ENV) $(GOCMD) run $(APIDIFF) -m .cache/api-base.export $(MODULE_PATH) \
+		| grep -v '^- package .*/scripts/' \
+		| awk '/^[A-Z][a-z]* changes:$$/ { h = $$0; next } /^- / { if (h != "") { print h; h = "" } } { print }' \
+		> .cache/api-diff.txt
 	@echo "API changes since $(API_BASE):"
 	@if [ -s .cache/api-diff.txt ]; then cat .cache/api-diff.txt; else echo "  none"; fi
 	@if grep -q '^Incompatible changes' .cache/api-diff.txt; then bump=major; \
@@ -79,7 +85,7 @@ apicheck: ## Compare the exported API with the previous tag and print the versio
 # The vendored skills and the checkers' own tests carry sample work-item ids
 # on purpose, so the walk skips them; the module's own code and documents are
 # still read.
-DOCS_SKIP=.plan,.cache,node_modules,vendor,bin,dist,.agents,scripts
+DOCS_SKIP=.plan,.cache,node_modules,vendor,bin,dist
 docs-check: ## Verify docs links, citations, paths, make targets and ids
 	@$(HERMETIC_ENV) $(GOCMD) run ./scripts/docscheck -skip $(DOCS_SKIP)
 
