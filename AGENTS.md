@@ -4,7 +4,7 @@
 `github.com/rfizzle/llm`: the agent loop and the parts that go with it, as
 independent Go packages that applications assemble through named seams. It is
 consumed by shhh and hearth, and the module never learns which app calls it.
-The design is in `docs/`; start at `docs/README.md`. (planned)
+The design is in `docs/`; start at `docs/README.md`.
 
 ## Scope and restraint
 
@@ -21,7 +21,7 @@ same-commit rule; `sound-patterns` settles style.
 - Documents name no code symbol; code cites documents:
   `// See docs/<file>.md#<heading>`. Headings are anchors; renaming one
   means fixing its citations in the same commit.
-- The package contract is the `doc.go` of each package; nothing in `docs/` (planned)
+- The package contract is the `doc.go` of each package; nothing in `docs/`
   restates it.
 - A change that moves a command, path, behaviour or decision updates the
   document in the same commit. `make docs-check` verifies the mechanical

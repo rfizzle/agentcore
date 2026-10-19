@@ -23,5 +23,5 @@ runnable examples in each package's `example_test.go` show the common uses and
 run under `go test` with no network; the API is on
 [pkg.go.dev](https://pkg.go.dev/github.com/rfizzle/agentcore).
 
-The design is in `docs/` (planned); start at `docs/README.md`. MIT licence; see
+The design is in `docs/`; start at `docs/README.md`. MIT licence; see
 `LICENSE`.
