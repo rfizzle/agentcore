@@ -52,6 +52,8 @@ only an app can supply, there is a seam, and the default is neutral.
 
 Each seam is a field, a setter or a constructor argument, and a nil one keeps
 the module's own behaviour.
+The list in the Seams section of the package documentation (`doc.go`) is
+canonical and is tested against the code; this table is the common ones.
 
 | Seam | Package | What it is for |
 | --- | --- | --- |
@@ -177,6 +179,8 @@ Before `v1.0.0` the surface is allowed to change between minor versions; read
 the commit messages between two tags before moving a pin.
 
 ## Versioning
+
+`v0.1.0` is the first tag an app pins; `v0.0.x` were the steps that built it.
 
 Every tag message lists the incompatible API changes the tag carries, or says
 `api: compatible`. `make apicheck` produces the list: it compares the exported
