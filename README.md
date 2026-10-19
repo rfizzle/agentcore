@@ -176,9 +176,24 @@ pushed.
 Before `v1.0.0` the surface is allowed to change between minor versions; read
 the commit messages between two tags before moving a pin.
 
+## Versioning
+
+Every tag message lists the incompatible API changes the tag carries, or says
+`api: compatible`. `make apicheck` produces the list: it compares the exported
+API of every package with the previous tag and prints the version bump the
+difference requires, and the gate runs it, so a tag message is written from
+that output and not from memory.
+
+The module stays at v0 until both applications that use it have shipped a
+milestone on one tag without needing a change to it. Freezing the API earlier
+would lock in the assumptions of whichever app wrote it first. From then on it
+is v1, with Go's compatibility promise. Because the exported API carries `llm`
+types, an incompatible `llm` change bumps this module in lockstep, and the
+module and both apps sit on one `llm` tag.
+
 ## Checks
 
-`make help` lists them. The gate is `make fmt-check vet lint test`; the
+`make help` lists them. The gate is `make ci`, which is `fmt-check vet lint test apicheck`; the
 examples above are ordinary tests and run under `test` with no network.
 
 ## License

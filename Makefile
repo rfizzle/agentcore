@@ -18,8 +18,15 @@ PROJECT_GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*" -not
 # asks git rather than the filesystem.
 TRACKED_GOFILES=$(shell git ls-files '*.go')
 PROJECT_PACKAGES=$(shell go list ./...)
+# The API check runs apidiff at this pinned version through go run: nothing is
+# installed globally, and the tool a gate runs is the one a person runs.
+APIDIFF=golang.org/x/exp/cmd/apidiff@v0.0.0-20261014143641-f0251eb4aa3e
+MODULE_PATH=$(shell go list -m)
+# The version this working tree is compared with: the latest tag reachable from
+# HEAD. Override it to compare with another, as in make apicheck API_BASE=v0.0.5.
+API_BASE ?= $(shell git describe --tags --abbrev=0 2>/dev/null)
 
-.PHONY: all fmt fmt-check vet lint test integration help
+.PHONY: all fmt fmt-check vet lint test apicheck ci integration help
 
 all: help
 
@@ -47,6 +54,27 @@ vet: ## Run go vet over every tier's files
 
 lint: ## Run golangci-lint
 	@$(HERMETIC_ENV) $(GOLANGCI_LINT) run --modules-download-mode=readonly
+
+# gorelease reads the base version from the module proxy, which does not carry
+# tags that are not pushed yet, so this compares against a checkout of the tag
+# under .cache/ instead. apidiff reports; the bump is read from its sections:
+# an incompatible change needs a major bump (a minor one while the module is at
+# v0), an addition a minor one, and no change none.
+apicheck: ## Compare the exported API with the previous tag and print the version bump it needs
+	@test -n "$(API_BASE)" || { echo "apicheck: no tag to compare with"; exit 1; }
+	@rm -rf .cache/api-base .cache/api-base.export
+	@mkdir -p .cache/api-base
+	@git archive "$(API_BASE)" | tar -x -C .cache/api-base
+	@cd .cache/api-base && $(HERMETIC_ENV) $(GOCMD) run $(APIDIFF) -m -w ../api-base.export $(MODULE_PATH)
+	@$(HERMETIC_ENV) $(GOCMD) run $(APIDIFF) -m .cache/api-base.export $(MODULE_PATH) > .cache/api-diff.txt
+	@echo "API changes since $(API_BASE):"
+	@if [ -s .cache/api-diff.txt ]; then cat .cache/api-diff.txt; else echo "  none"; fi
+	@if grep -q '^Incompatible changes' .cache/api-diff.txt; then bump=major; \
+	elif grep -q '^Compatible changes' .cache/api-diff.txt; then bump=minor; \
+	else bump=none; fi; \
+	echo "version bump required over $(API_BASE): $$bump"
+
+ci: fmt-check vet lint test apicheck ## Run the gate CI runs
 
 ## Test:
 # Cacheable on purpose: nothing here adds -count=1, and a test must not chdir.
