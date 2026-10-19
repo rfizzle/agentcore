@@ -42,8 +42,8 @@ type ToolResult struct {
 	// ones that cannot are left with the notice the tool wrote.
 	Attachments []llmattachment.Attachment
 	// Value is what the result carries beside its text
-	// (provider.Message.Value): the quality gate's verdict, which the rows
-	// read in place of the text.
+	// (provider.Message.Value): a structured verdict a tool returns, which
+	// an app's surface can read in place of the text.
 	Value    json.RawMessage
 	Duration time.Duration
 }

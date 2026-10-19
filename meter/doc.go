@@ -1,6 +1,6 @@
-// Package meter is session spend accounting. Every request an app makes — the
-// agent's own rounds, the permission classifier, the session summary, each
-// sub-agent's turns — is a call to a provider, so the provider is the one thing
+// Package meter is session spend accounting. Every request an app makes (the
+// agent's own rounds, any classifier it runs, the session summary, each
+// sub-agent's turns) is a call to a provider, so the provider is the one thing
 // a feature cannot route around. The gate wraps a provider and attributes what
 // passes through it to an origin; the ledger behind the gate adds it up.
 //

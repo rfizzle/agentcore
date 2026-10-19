@@ -403,8 +403,8 @@ func (r *SummaryRun) StartTurn() {
 // whole shape of this: a summary is never the reason a run is slower, and a
 // child's report to its parent is the run's deliverable, so waiting out a
 // reading on the end of every child would be the summariser costing the
-// fan-out. A surface that outlives the run — a lane under its supervisor, a
-// served session — records the verdict when it arrives; a one-shot run that
+// fan-out. A surface that outlives the run (a long-lived parent loop, a
+// served session) records the verdict when it arrives; a one-shot run that
 // has already exited loses it and says nothing. A nil deliver takes no
 // closing reading at all: there would be nowhere for it to go, and a reading
 // nobody can read is a request nobody should pay for.
