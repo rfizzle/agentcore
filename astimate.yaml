@@ -460,4 +460,10 @@ languages:
 #       metric: globals
 #       reason: the registry is process-wide by design; see ADR 12
 #       expires: 2026-12-31
-exemptions: []
+exemptions:
+  - package: meter
+    metric: exported_symbols
+    reason: one ledger type whose cache reading and lifetime are its methods
+  - package: meter
+    metric: dup_blocks
+    reason: carried from the source package unchanged by the move rule; a later split story may resolve it
