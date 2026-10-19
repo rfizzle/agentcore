@@ -479,3 +479,6 @@ exemptions:
   - package: agent
     metric: tokens_est
     reason: the loop, its drivers and its clocks are one package by necessity (about 2450 sloc, PARTITION at about 2.5 passes); headless and the readings can split out later without a rewrite
+  - package: agent
+    metric: dup_blocks
+    reason: carried from the source package unchanged by the move rule; S-1179 moves recorder, summaryrun and schedule into reading and resolves them
