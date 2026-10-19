@@ -17,7 +17,7 @@ package agent
 // have, and cannot do while looking away. The interval below asks the
 // question on its own, long before the cap.
 //
-// RepeatDetector (repeat.go) is the other half of the same problem: it
+// repeat.RepeatDetector is the other half of the same problem: it
 // catches a turn asking one question twice, this catches a turn that has
 // stopped asking anything new.
 //

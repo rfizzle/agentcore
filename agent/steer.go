@@ -2,7 +2,7 @@ package agent
 
 // Acting on the drift verdict.
 //
-// The summarizer (summary.go) has always read whether a run is still serving
+// The summarizer (package reading) has always read whether a run is still serving
 // the instruction it started from, and the reading was rendered and nothing
 // more. This is the half that acts on it: when a reading comes back
 // off-target, the turn is told, at the next round boundary, with the

@@ -1,7 +1,7 @@
 // Package agent owns the front-end-agnostic agentic loop state: the
 // conversation message list, stream requests, tool dispatch, the queue of
 // approval-gated tool calls, and the per-turn iteration guard. Front-ends
-// (a chat TUI, the headless runner in this package) drive an Agent step by step
+// (an interactive terminal UI, the headless runner in this package) drive an Agent step by step
 // and surface approvals and progress to the user themselves.
 package agent
 
@@ -30,10 +30,10 @@ type StreamFunc func(msgs []llm.Message, choice string) (<-chan llm.StreamEvent,
 type ToolExecutor func(ctx context.Context, name string, args json.RawMessage) (string, error)
 
 // ApprovalGate reports whether a tool call must be approved by the user
-// before it may run. The front-end implements it (the chat TUI gates
-// execute_command, mutating tools, and registered gated tools). The gate sees
-// the whole call, so a tool can gate on its arguments (the process tool gates
-// only its start action).
+// before it may run. The front-end implements it (an interactive
+// surface asks the person; a tool that writes or runs commands is the usual
+// one to gate). The gate sees the whole call, so a tool can gate on its
+// arguments (a process tool gating only its start action).
 type ApprovalGate func(tc llm.ToolCall) bool
 
 // ToolResult pairs an executed tool call with its result text and how long
@@ -68,8 +68,8 @@ const DefaultMaxToolRounds = 150
 // UnlimitedToolRounds passed to SetMaxRounds removes the per-turn cap: the
 // loop runs until the model stops asking for tools. It is for headless runs a
 // human is watching in the foreground, where the cap has nobody to hand
-// control back to and interrupting is the way out. The chat TUI never uses
-// it — there the cap is the checkpoint.
+// control back to and interrupting is the way out. An interactive surface never
+// uses it — there the cap is the checkpoint.
 const UnlimitedToolRounds = -1
 
 // CancelledResult is the synthetic tool result recorded for calls still
@@ -79,7 +79,7 @@ const CancelledResult = "error: cancelled by user"
 
 // Agent is the loop state for one conversation. It is a passive state
 // machine: the front-end feeds it stream events and approval decisions and
-// asks it what to do next, so the same Agent can back an interactive TUI or
+// asks it what to do next, so the same Agent can back an interactive terminal UI or
 // a headless run.
 type Agent struct {
 	resultParts func(result string) []llmattachment.Attachment
@@ -188,6 +188,14 @@ type Agent struct {
 	callObserver func(calls []llm.ToolCall)
 }
 
+// New returns an Agent holding initial as its conversation, normally the
+// system prompt and any resumed messages (nil starts empty), and stream as the
+// way it asks a model for a completion. stream is called once per request with
+// the scrubbed message list and the tool choice, so an app puts its provider,
+// model and options inside the closure. Everything else is optional and
+// installed by the Set methods: the executor for auto-run calls, the scrub,
+// the round cap and the observers each default to doing nothing or to
+// DefaultMaxToolRounds.
 func New(initial []llm.Message, stream StreamFunc) *Agent {
 	return &Agent{messages: initial, stream: stream}
 }
@@ -214,9 +222,9 @@ func (a *Agent) SetCallCancel(fn CallCancel) { a.callCancel = fn }
 // default, tells nobody.
 func (a *Agent) SetCallObserver(fn func(calls []llm.ToolCall)) { a.callObserver = fn }
 
-// SetTurnStart installs what is told that a turn has begun: the tools' read
+// SetTurnStart installs what is told that a turn has begun: an app's read
 // record, whose search results are evidence for the turn that asked them and
-// for no later one (tools.Recorder.NewTurn). Nil, the default, tells nobody.
+// for no later one, starts a new turn here. Nil, the default, tells nobody.
 func (a *Agent) SetTurnStart(fn func()) { a.turnStart = fn }
 
 // KeepResults exempts tool results matching keep from context trimming. A

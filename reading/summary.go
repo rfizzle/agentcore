@@ -106,7 +106,7 @@ const (
 	// SummaryOnTarget: the work is serving the instruction that started it.
 	SummaryOnTarget
 	// SummaryOffTarget: the work has departed from it. A steer acts on this
-	// one (steer.go).
+	// one (the agent package's steer).
 	SummaryOffTarget
 	// SummarySufficient: the work is still on the instruction, and has
 	// gathered what it needs without starting to act on it. It is a
@@ -521,7 +521,7 @@ func (r SummaryRequest) digest() map[string]any {
 		// bound and separated the way the digest separates everything else:
 		// two things the person asked must not read as one sentence, and the
 		// one they asked for last must not be the one the bound drops. An
-		// approved plan is one of those parts (ui/chat/planrun.go), so a
+		// approved plan is one of those parts (whatever the app's plan runner passes as a part), so a
 		// turn carrying out ten steps is read against the ten steps.
 		"instruction":  strings.Join(clampFields(ClampTargetParts(r.Target, maxSummaryField)), " · "),
 		"tool_round":   r.Round,

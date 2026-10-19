@@ -2,11 +2,11 @@ package agent
 
 // Headless drives an Agent's loop synchronously to completion: one
 // user turn, stream events consumed inline, tool rounds dispatched until the
-// model produces a final message or the per-turn round cap is hit. The chat
-// TUI drives the same Agent asynchronously through Bubble Tea messages; this
-// runner is the scriptable front-end behind an app's print mode and each
-// sub-agent. Steering and interruption let a supervisor redirect or
-// cancel a running turn the way the TUI's steering mechanics do.
+// model produces a final message or the per-turn round cap is hit. An interactive
+// front-end drives the same Agent asynchronously, one event at a
+// time; this runner is the scriptable front-end behind an app's non-interactive
+// mode and each sub-agent. Steering and interruption let a supervisor redirect
+// or cancel a running turn the way an interactive surface's steering does.
 //
 // It is the session's loop and not a simpler one: a round's auto calls are
 // dispatched together through the same bounded concurrency, and a request the
@@ -34,8 +34,8 @@ var ErrRoundCap = errors.New("tool round cap reached")
 
 // ErrInterrupted is returned by Headless.Run when Interrupt cancels the turn.
 // The conversation is left well-formed: outstanding tool calls received
-// synthetic results via Agent.CancelTurn, mirroring the TUI's cancelStreaming
-// semantics.
+// synthetic results via Agent.CancelTurn, matching what an interactive
+// surface does when a person cancels.
 var ErrInterrupted = errors.New("turn interrupted")
 
 // Headless runs an Agent to completion without a UI. Gate decides which tool
@@ -75,7 +75,7 @@ type Headless struct {
 	// loop waiting for a release nobody is going to send.
 	//
 	// The seam exists for the child loop, where a supervisor holds a whole
-	// fan-out at once. A `-p` run has no keyboard and nothing sets it.
+	// fan-out at once. A run with no keyboard has nobody to hold it and nothing sets it.
 	Hold func() <-chan struct{}
 
 	// OnClose, when set, is asked at the one moment a turn's work is
@@ -173,7 +173,7 @@ type Headless struct {
 
 	// retry is the bound across the whole turn, not across one request: three
 	// rate limits in a row are three attempts and not three fresh chances
-	// (retry.go).
+	// (package retry).
 	retry retry.Backoff
 
 	// truncated is what TruncatedReply answers. It describes a turn that is
@@ -198,7 +198,7 @@ type Headless struct {
 }
 
 // SetRetryLimit bounds this run's stalls at the attempts a setting names;
-// nil is a file that named none and keeps the built-in bound (retry.go).
+// nil is a file that named none and keeps the built-in bound (retry.MaxRetryAttempts).
 func (h *Headless) SetRetryLimit(n *int) { h.retry.SetLimit(n) }
 
 // TruncatedReply reports the answer the last Run returned as one the model's
@@ -325,7 +325,7 @@ func (h *Headless) Run(prompt string) (string, error) {
 			// The round asked for tools and ran out of budget while it was
 			// still writing them. What survived is whole and runs as usual;
 			// the call the ceiling landed inside of was dropped before it
-			// got here (github.com/rfizzle/llm, partial.go), and a run whose round
+			// got here (see llm's partial-call handling), and a run whose round
 			// silently lost one has no way to say so afterwards.
 			h.notifyContinue(TruncatedRoundNotice)
 		}
@@ -799,8 +799,8 @@ func (h *Headless) deliverTree() {
 
 // streamOnce opens one completion stream over the current conversation and
 // consumes it, returning the assistant text, any tool calls that ended the
-// stream, and why the model stopped writing. Like the TUI's terminalMsg, a
-// tool-call event ends the stream.
+// stream, and why the model stopped writing. A tool-call event ends the
+// stream, as the terminal event of an interactive surface's would.
 func (h *Headless) streamOnce(bufferText bool) (string, []llm.ToolCall, llm.StopReason, error) {
 	h.mark((*TurnClock).Request)
 	events, cancel, err := h.Agent.Stream(h.Agent.RequestMessages())
