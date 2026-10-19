@@ -66,8 +66,8 @@ type RoundTail struct {
 
 	// Boundary, when set, is asked at this boundary whether the driver owes
 	// the conversation a message, and the message is appended through
-	// AppendMachine when it does: the tree reading's notice. A driver with
-	// nothing to say at a boundary leaves it nil.
+	// AppendMachine when it does: a notice the driver composes from outside
+	// the run. A driver with nothing to say at a boundary leaves it nil.
 	Boundary func(turnStart bool) (message string, ok bool)
 
 	OnIntervene func(Intervention)

@@ -2,11 +2,12 @@ package agent
 
 // Headless drives an Agent's loop synchronously to completion: one
 // user turn, stream events consumed inline, tool rounds dispatched until the
-// model produces a final message or the per-turn round cap is hit. An interactive
-// front-end drives the same Agent asynchronously, one event at a
-// time; this runner is the scriptable front-end behind an app's non-interactive
-// mode and each sub-agent. Steering and interruption let a supervisor redirect
-// or cancel a running turn the way an interactive surface's steering does.
+// model produces a final message or the per-turn round cap is hit. An
+// interactive front-end drives the same Agent asynchronously, one event at a
+// time; this runner is the scriptable front-end behind an app's
+// non-interactive mode and each sub-agent. Steering and interruption let a
+// caller redirect or cancel a running turn the way an interactive surface's
+// steering does.
 //
 // It is the session's loop and not a simpler one: a round's auto calls are
 // dispatched together through the same bounded concurrency, and a request the
@@ -74,8 +75,9 @@ type Headless struct {
 	// interruptible: a held run that is then killed must not sit in a poll
 	// loop waiting for a release nobody is going to send.
 	//
-	// The seam exists for the child loop, where a supervisor holds a whole
-	// fan-out at once. A run with no keyboard has nobody to hold it and nothing sets it.
+	// The seam exists for a driver that runs several loops and holds them
+	// all at once. A run with no keyboard has nobody to hold it and nothing
+	// sets it.
 	Hold func() <-chan struct{}
 
 	// OnClose, when set, is asked at the one moment a turn's work is
@@ -112,9 +114,9 @@ type Headless struct {
 	OnWithheld func(reason string)
 
 	// Boundary, when set, is asked at each turn's start and between rounds
-	// whether the run is owed a message — the tree reading's notice — and
-	// the message joins the conversation through AppendMachine. It may be
-	// nil.
+	// whether the run is owed a message — a notice the driver composes from
+	// outside the run — and the message joins the conversation through
+	// AppendMachine. It may be nil.
 	Boundary func(turnStart bool) (message string, ok bool)
 
 	// OnSummary, when set, is told each reading that lands, before the
@@ -154,7 +156,7 @@ type Headless struct {
 	OnContinue func(notice string)
 
 	// OnCompact, when set, is told what each recovery step did, so a
-	// scripted run can say it on stderr and a child can say it on its lane.
+	// scripted run can say it on stderr and a surface can show it.
 	// It is told about a compaction that failed as well as one that worked:
 	// a run heading for a window it could not recover is the one thing here
 	// worth reading.
@@ -197,14 +199,15 @@ type Headless struct {
 	interrupted  bool
 }
 
-// SetRetryLimit bounds this run's stalls at the attempts a setting names;
-// nil is a file that named none and keeps the built-in bound (retry.MaxRetryAttempts).
+// SetRetryLimit bounds this run's stalls at the attempts n names; nil names
+// none and keeps the built-in bound (retry.MaxRetryAttempts).
 func (h *Headless) SetRetryLimit(n *int) { h.retry.SetLimit(n) }
 
 // TruncatedReply reports the answer the last Run returned as one the model's
 // output ceiling cut short and the round's single continuation had already
-// been spent on. It answers about a finished Run and is read after one. It is the first half of an answer that looks exactly like a
-// whole one, and a caller that grades it as whole grades half the work.
+// been spent on. It answers about a finished Run and is read after one. It is
+// the first half of an answer that looks exactly like a whole one, and a
+// caller that grades it as whole grades half the work.
 func (h *Headless) TruncatedReply() bool { return h.truncated }
 
 // Interrupt cancels the current turn from another goroutine: the in-flight

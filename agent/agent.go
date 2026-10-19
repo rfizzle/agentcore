@@ -1,8 +1,3 @@
-// Package agent owns the front-end-agnostic agentic loop state: the
-// conversation message list, stream requests, tool dispatch, the queue of
-// approval-gated tool calls, and the per-turn iteration guard. Front-ends
-// (an interactive terminal UI, the headless runner in this package) drive an Agent step by step
-// and surface approvals and progress to the user themselves.
 package agent
 
 import (
@@ -79,8 +74,8 @@ const CancelledResult = "error: cancelled by user"
 
 // Agent is the loop state for one conversation. It is a passive state
 // machine: the front-end feeds it stream events and approval decisions and
-// asks it what to do next, so the same Agent can back an interactive terminal UI or
-// a headless run.
+// asks it what to do next, so the same Agent can back an interactive surface
+// or a headless run.
 type Agent struct {
 	resultParts func(result string) []llmattachment.Attachment
 	stream      StreamFunc
@@ -218,7 +213,7 @@ type CallCancel func(ctx context.Context, tc llm.ToolCall, cancel context.Cancel
 func (a *Agent) SetCallCancel(fn CallCancel) { a.callCancel = fn }
 
 // SetCallObserver installs what is told the calls of each round as the round
-// begins: the tree reading counts the ones that may write anywhere. Nil, the
+// begins, so an observer can count the ones that may write anywhere. Nil, the
 // default, tells nobody.
 func (a *Agent) SetCallObserver(fn func(calls []llm.ToolCall)) { a.callObserver = fn }
 
