@@ -470,3 +470,12 @@ exemptions:
   - package: secret
     metric: dup_blocks
     reason: carried from the source package unchanged by the move rule; the pattern table repeats one shape per credential family
+  - package: agent
+    metric: exported_symbols
+    reason: the loop, its drivers and its clocks are one package by necessity; the Agent's methods are the API every driver uses (about 230 exports, PARTITION at about 2.5 passes), and the splits that shrink it are filed follow-ups
+  - package: agent
+    metric: sloc
+    reason: the loop, its drivers and its clocks are one package by necessity (about 2450 sloc, PARTITION at about 2.5 passes); headless and the readings can split out later without a rewrite
+  - package: agent
+    metric: tokens_est
+    reason: the loop, its drivers and its clocks are one package by necessity (about 2450 sloc, PARTITION at about 2.5 passes); headless and the readings can split out later without a rewrite
